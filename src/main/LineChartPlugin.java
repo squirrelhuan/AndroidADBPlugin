@@ -32,7 +32,12 @@ public class LineChartPlugin extends PluginService implements CView.onClickListe
     @Override
     public void onCreate(Lorder lorder) {
         super.onCreate(lorder);
-        cButton01 = new CButton("创建一个简单的pdf文件");
+
+        VerticleLayout verticleLayout = new VerticleLayout();
+        verticleLayout.addView(LineChartHelper.test());
+        setContentView("hello word", verticleLayout);
+
+       /* cButton01 = new CButton("创建一个简单的pdf文件");
         cButton01.setId("id_001");
         cButton02 = new CButton("PDF文件设置文件属性");
         cButton02.setId("id_002");
@@ -78,6 +83,7 @@ public class LineChartPlugin extends PluginService implements CView.onClickListe
         verticleLayout.addView(cImageView);
         verticleLayout.addView(cCheckBox);
         verticleLayout.addView(cProgressBar);
+        verticleLayout.addView(LineChartHelper.test());
         setContentView("hello word", verticleLayout);
         //cButton01.setText("弹窗按钮");
         cButton01.setOnClickListener(this);
@@ -110,7 +116,7 @@ public class LineChartPlugin extends PluginService implements CView.onClickListe
                 System.out.println("end");
             }
         });
-        thread.start();
+        thread.start();*/
     }
 
     /**

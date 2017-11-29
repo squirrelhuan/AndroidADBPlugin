@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/TestPlugin.iml" filepath="$PROJECT_DIR$/TestPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/LineChartPlugin.iml" filepath="$PROJECT_DIR$/LineChartPlugin.iml" />
     </modules>
   </component>
 </project>
