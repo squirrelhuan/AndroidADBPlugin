@@ -26,5 +26,6 @@
     </orderEntry>
     <orderEntry type="library" name="FxProject01" level="project" />
     <orderEntry type="library" name="itext-2.1.7" level="project" />
+    <orderEntry type="library" name="derby" level="project" />
   </component>
 </module>
