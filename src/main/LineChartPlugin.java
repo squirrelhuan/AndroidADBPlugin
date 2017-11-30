@@ -35,7 +35,7 @@ public class LineChartPlugin extends PluginService implements CView.onClickListe
 
         VerticleLayout verticleLayout = new VerticleLayout();
         verticleLayout.addView(LineChartHelper.test());
-        setContentView("hello word", verticleLayout);
+        setContentView("曲线图插件", verticleLayout);
 
        /* cButton01 = new CButton("创建一个简单的pdf文件");
         cButton01.setId("id_001");

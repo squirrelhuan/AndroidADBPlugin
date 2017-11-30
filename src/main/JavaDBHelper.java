@@ -3,19 +3,80 @@ package main;
 import java.sql.*;
 import java.util.Properties;
 
-/**
+/** javaDB helper
  * Created by huan on 2017/11/30.
  */
 public class JavaDBHelper {
-    /**
+
+    /** how to use javaDB refrence this method
      * @param args
      */
     public static void main(String[] args) {
         try {
+            open();
+            execute("drop table  user_uer");
+            System.out.println("create table user_uer");
+            execute("create table user_uer ( name varchar(20), score int)");
+            execute("insert into user_uer ( name,score) values ('小明',89)");
+            execute("insert into user_uer (name ,score) values ('小花',90)");
+            ResultSet rSet = executeQuery("select name,score from user_uer");
+            System.out.println("------------------------");
+            while (rSet.next()) {
+                System.out.println(rSet.getString("name"));
+                System.out.println(rSet.getInt("score"));
+            }
+            System.out.println("query user_uer data");
+            close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void execute(String sql) {
+        try {
+            statement = conn.createStatement();
+            statement.execute(sql);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static ResultSet executeQuery(String sql) {
+        ResultSet rSet = null;
+            try {
+                System.out.println("create derbyDB");
+                conn.setAutoCommit(false);
+                statement = conn.createStatement();
+                rSet = statement.executeQuery(sql);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        return rSet;
+    }
+
+    //关闭连接
+    public static void close() {
+        try {
+            statement.close();
+            conn.commit();
+            conn.close();
+            DriverManager.getConnection("jdbc:derby:helloDB;shutDown=true");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static Statement statement;
+    private static Connection conn;
+
+    //开启连接
+    public static void open() {
+        try {
             Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
             System.out.println("Loaded the EmbeddedDriver");
-            Connection conn =null;
-            Properties props =new Properties();
+
+            Properties props = new Properties();
             props.setProperty("user", "user");
             props.setProperty("password", "password");
             try {
@@ -23,35 +84,13 @@ public class JavaDBHelper {
                 System.out.println("create derbyDB");
                 conn.setAutoCommit(false);
 
-                Statement statement =conn.createStatement();
-                statement.execute("drop table 't_user'");
-                System.out.println("create table user_uer");
-                statement.execute("create table user_uer ( name varchar(20), score int)");
-                statement.execute("insert into user_uer ( name,score) values ('小明',89)");
-                statement.execute("insert into user_uer (name ,score) values ('小花',90)");
-                ResultSet rSet =statement.executeQuery("select name,score from user_uer");
-                System.out.println("------------------------");
-                while (rSet.next()) {
-                    System.out.println(rSet.getString("name"));
-                    System.out.println(rSet.getInt("score"));
-                }
-                System.out.println("query user_uer data");
-                rSet.close();
-                statement.close();
-                conn.commit();
-                conn.close();
-                DriverManager.getConnection("jdbc:derby:helloDB;shutDown=true");
-            } catch (SQLException e) {
+                statement = conn.createStatement();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
+
 }
