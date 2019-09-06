@@ -2,9 +2,10 @@ package main;
 
 import java.io.*;
 import java.sql.*;
-import java.util.Properties;
+import java.util.*;
 
-/** javaDB helper
+/**
+ * javaDB helper
  * Created by huan on 2017/11/30.
  */
 public class ADBHelper {
@@ -18,8 +19,8 @@ public class ADBHelper {
     private String directory_path;
     private static ADBHelper instance;
 
-    public static  ADBHelper getInstance(){
-        if (instance==null){
+    public static ADBHelper getInstance() {
+        if (instance == null) {
             instance = new ADBHelper();
         }
         return instance;
@@ -29,15 +30,15 @@ public class ADBHelper {
         init();
     }
 
-    private  void init() {
+    private void init() {
         File directory = new File("adb");//设定为当前文件夹
         try {
-            System.out.println("获取标准的路径="+directory.getCanonicalPath());//获取标准的路径
+            System.out.println("获取标准的路径=" + directory.getCanonicalPath());//获取标准的路径
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("获取绝对路径="+directory.getAbsolutePath());//获取绝对路径
-        System.out.println("获取class路径="+getClass().getClass()
+        System.out.println("获取绝对路径=" + directory.getAbsolutePath());//获取绝对路径
+        System.out.println("获取class路径=" + getClass().getClass()
                 .getResource("/")
                 .toString());//获取绝对路径
         if (!directory.exists()) {
@@ -47,24 +48,29 @@ public class ADBHelper {
             Path_Temp = directory.getAbsolutePath();
             directory_path = new File("").getAbsolutePath();
             Path_Temp = Path_Temp.substring(0, Path_Temp.lastIndexOf(File.separator));
-            Path_Def = Path_Temp+File.separator+"res/screen_android/def.png";
+            Path_Def = Path_Temp + File.separator + "res/screen_android/def.png";
             System.out.println("获取绝对路径" + Path_Temp);//获取绝对路径
         }
     }
+
     OnScreenChangeListener onScreenChangeListener;
+    private Map<String ,DeviceModel> deviceMap = new HashMap<>();
+    private DeviceModel currentDevice;
+    public void changeDeviece(String devName){
+        currentDevice = deviceMap.get(devName);
+    }
     public void startScreen(OnScreenChangeListener onScreenChangeListener) {
         this.onScreenChangeListener = onScreenChangeListener;
         isRunning = true;
         execute(" adb kill-server ");
         execute(" adb start-server ");
+        execute(" adb connect 192.168.199.180:5555");
         execute(" adb devices ");
-        execute(" adb connect 192.168.199.180:5555");
-        execute(" adb connect 192.168.199.180:5555");
         //execute("alias remote-screencap='adb shell screencap -p | sed 's/\r$//'");//设置别名
-        String f = directory_path+"/resource/screen_android/";
+        String f = directory_path + "/resource/screen_android/";
         System.out.println(f);
         File file = new File(f);
-        if(!file.exists()){
+        if (!file.exists()) {
             try {
                 file.mkdirs();
             } catch (Exception e) {
@@ -79,26 +85,38 @@ public class ADBHelper {
         @Override
         public void run() {
             while (isRunning) {
-                execute("adb -s 192.168.199.180:5555 shell screencap -p /sdcard/tmp.png");
-                execute("adb -s 192.168.199.180:5555 pull /sdcard/tmp.png "+directory_path+"/resource/screen_android/");
+                String devName="192.168.199.180:5555";
+                if(currentDevice!=null){
+                    devName = currentDevice.getName();
+                }
+                execute("adb -s "+devName+ " shell screencap -p /sdcard/tmp.png");
+                execute("adb -s "+devName+ " pull /sdcard/tmp.png " + directory_path + "/resource/screen_android/");
                 //execute(" remote-screencap > screen.png");
-                onScreenChangeListener.onRefresh(directory_path+"/resource/screen_android/tmp.png");
+                onScreenChangeListener.onRefresh(directory_path + "/resource/screen_android/tmp.png");
             }
         }
     };
 
-    private static void execute(String cmd) {
+    private void execute(String cmd) {
+        execute(cmd, null);
+    }
+
+    private void execute(String cmd, OnReceiveListener onReceiveListener) {
         try {
             Process process = Runtime.getRuntime().exec(cmd);
             // 打印程序输出
-            readProcessOutput(process);
+            //readProcessOutput(process);
+            ProcessResult processResult = getProcessResult(process);
             // 等待程序执行结束并输出状态
             int exitCode = process.waitFor();
             if (exitCode == SUCCESS) {
                 System.out.println(SUCCESS_MESSAGE + cmd);
+                if(onReceiveListener!=null){
+                    onReceiveListener.onReceive(processResult);
+                }
             } else {
                 System.err.println(ERROR_MESSAGE + exitCode + "\n\r" + cmd);
-                switch (exitCode){
+                switch (exitCode) {
                     case 255:
                         System.out.println("端口ADB被占用");
                         break;
@@ -112,6 +130,34 @@ public class ADBHelper {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    private ProcessResult getProcessResult(Process process) {
+        ProcessResult result = new ProcessResult();
+        result.setResult(getResultString(process.getInputStream(), System.out));
+        result.setError(getResultString(process.getErrorStream(), System.err));
+        return result;
+    }
+
+    private String getResultString(InputStream inputStream, PrintStream out) {
+        StringBuffer stringBuffer = new StringBuffer();
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuffer.append(line+"\n\r");
+                out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return new String(stringBuffer);
     }
 
     /**
@@ -129,16 +175,13 @@ public class ADBHelper {
     private static void read(InputStream inputStream, PrintStream out) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
             String line;
             while ((line = reader.readLine()) != null) {
                 out.println(line);
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-
             try {
                 inputStream.close();
             } catch (IOException e) {
@@ -155,16 +198,60 @@ public class ADBHelper {
         execute(" adb kill-server ");
     }
 
+    OnAdbReceiceListener onAdbReceiceListener;
+
+    public void setOnAdbReceiceListener(OnAdbReceiceListener onAdbReceiceListener) {
+        this.onAdbReceiceListener = onAdbReceiceListener;
+    }
+
+    List<DeviceModel> deviceModels = new ArrayList<>();
     public void findDeviceList() {
-        execute(" adb devices ");
+        execute(" adb start-server ");
+        execute(" adb devices ", new OnReceiveListener() {
+            @Override
+            public void onReceive(ProcessResult result) {
+                if(result.getCode()==0){
+                    String res = result.getResult();
+                    if(res.startsWith("List of devices attached")) {
+                        String[] list = res.replace("List of devices attached\n\r","").split("\n\r");
+                        deviceModels.clear();
+                        deviceMap.clear();
+                        for (int i=0;i<list.length;i++){
+                            if(list[i].contains("\t")){
+                                DeviceModel deviceModel = new DeviceModel(list[i].split("\t")[0],list[i].split("\t")[1]);
+                                deviceModels.add(deviceModel);
+                                deviceMap.put(deviceModel.getName(),deviceModel);
+                            }
+                        }
+                        //System.out.println("设备列表：" + Arrays.asList(deviceModels));
+                        if(onAdbReceiceListener!=null){
+                            onAdbReceiceListener.onFindDevices(deviceModels);
+                        }
+                    }
+                }
+            }
+        });//List of devices attached
     }
 
     public void stopScreen() {
         isRunning = false;
     }
 
-    public static interface OnScreenChangeListener{
+    public void connect(String ip) {
+        execute("adb "+ip+" 5555");
+        execute(" adb connect "+ip);
+    }
+
+    public static interface OnScreenChangeListener {
         void onRefresh(String path);
+    }
+
+    public static interface OnReceiveListener {
+        void onReceive(ProcessResult result);
+    }
+
+    public static interface OnAdbReceiceListener{
+        void onFindDevices(List<DeviceModel> deviceModels);
     }
 
 }
